@@ -1,0 +1,46 @@
+{
+	"tiddlers": [{
+		"file": "license.tid",
+		"fields": {
+			"type": "text/plain",
+			"title": "$:/plugins/bj/unieditor/license"
+		}
+	},
+	{
+		"file": "readme.tid",
+		"fields": {
+			"title": "$:/plugins/bj/unieditor/readme"
+		}
+	},	
+	{
+		"file": "mappings.json.tid",
+		"fields": {
+			"title": "$:/plugins/bj/unieditor/mappings.json",
+            "type":"application/json"
+		}
+	},
+	{
+		"file": "edoptions.json.tid",
+		"fields": {
+			"title": "$:/plugins/bj/unieditor/edoptions.json",
+            "type":"application/json"
+		}
+	},
+	{
+		"file": "javascript.tid",
+		"fields": {
+			"title": "$:/config/unieditor/TypeMappings/application/javascript"
+		}
+	},
+    {
+			"file": "edit-uni.js",
+			"fields": {
+				"type": "application/javascript",
+				"title": "$:/plugins/bj/unieditor/edit-uni.js",
+				"module-type": "widget"
+			}
+		}],
+	 "directories": [
+		"files"
+	 ]
+}

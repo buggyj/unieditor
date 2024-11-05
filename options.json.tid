@@ -1,0 +1,7 @@
+{
+	"defaultTheme": false,
+	"lineNumbers": false,
+	"maxLines" : 10000,
+	"minLines" : 1,
+	"readonly": true
+}

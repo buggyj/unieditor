@@ -1,0 +1,7 @@
+{
+	"application/javascript": "javascript",
+	"text/css": "css",
+	"text/markdown": "md",
+    "text/vnd.tiddlywiki": "tw",
+    "":"tw"
+}

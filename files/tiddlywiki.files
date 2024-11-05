@@ -1,0 +1,21 @@
+{
+	"tiddlers": [
+		{
+			"file": "unieditor.js",
+			"fields": {
+				"type": "application/javascript",
+				"title": "$:/plugins/bj/unieditor/unieditor.js",
+				"module-type": "library"
+			}
+		},
+
+		{
+			"file": "unieditor.css",
+			"fields": {
+				"type": "text/css",
+				"title": "$:/plugins/bj/unieditor/unieditor.css",
+				"tags": "$:/tags/Stylesheet"
+			}
+		}
+	]
+}
