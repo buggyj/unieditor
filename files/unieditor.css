@@ -30,18 +30,19 @@ div.unieditor > * {
   white-space:  pre-wrap;
   text-align: left;
   line-height: 1.2rem;
-  color: transparent;
+ 
   font-family:  Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
   caret-color: #000;
   font-size: 1em;
   text-align: left;
   word-spacing: normal;
-  word-break: normal;
+  word-break: break-word;
   word-wrap: normal;
 
 }
 div.unieditor > .unieditor__textarea {
-  z-index: 3;   
+  z-index: 3; 
+   color: transparent;  
 }
 div.unieditor > .unieditor__textarea::selection {
   background-color: rgba(245, 40, 145, 0.42); /* Highlight background color */
@@ -52,14 +53,13 @@ div.unieditor > .unieditor__textarea::-webkit-scrollbar {
 }
 div.unieditor   pre.unieditor__pre {
   z-index: 1;
-  color:black;
+
   display: block;
-  color:#333;
+
   /*for fix editor height, needs to overflow and be hidden for js scrolling*/
   height:fit-content;
-  width:fit-content;
+  /*width:fit-content;*/
 }
-
 
 
 

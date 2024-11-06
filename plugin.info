@@ -3,7 +3,7 @@
 	"description": "edit js and cs and html",
 	"name": "unieditor",
 	"author": "Jeffrey Wilkinson (BJ)",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"list": "readme license",
 	"core-version": ">=5.3.5",
 	"source": "https://github.com/buggyj/unieditor",

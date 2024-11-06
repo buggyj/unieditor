@@ -1,6 +1,6 @@
 "use strict";
 
-const utils = $tw.utils;
+const {highlightElement,utils} = require("$:/plugins/tiddlywiki/unicode/libs.js");
 
 exports.uniEditor = class uniEditor {
   constructor (parent, callback, opts) {
@@ -38,7 +38,7 @@ setCode (code) {this.textLayer.setCode(code)}
  
   updateCanvas = (code) => {
 	this.canvas.innerHTML = $tw.utils.htmlEncode(code)
-    Prism.highlightElement(this.canvas, false)
+    highlightElement(this.canvas, false)
   }
   
    scrollCanvas = (e) => { 

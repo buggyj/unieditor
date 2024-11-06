@@ -27,9 +27,27 @@
 		}
 	},
 	{
-		"file": "javascript.tid",
+		"file": "jstype.tid",
 		"fields": {
-			"title": "$:/config/unieditor/TypeMappings/application/javascript"
+			"title": "$:/config/EditorTypeMappings/application/javascript"
+		}
+	},
+	{
+		"file": "mdtype.tid",
+		"fields": {
+			"title": "$:/config/EditorTypeMappings/text/markdown"
+		}
+	},	
+	{
+		"file": "csstype.tid",
+		"fields": {
+			"title": "$:/config/EditorTypeMappings/text/css"
+		}
+	},
+	{
+		"file": "twtype.tid",
+		"fields": {
+			"title": "$:/config/EditorTypeMappings/text/vnd.tiddlywiki"
 		}
 	},
     {

@@ -8,13 +8,20 @@
 				"module-type": "library"
 			}
 		},
-
 		{
 			"file": "unieditor.css",
 			"fields": {
 				"type": "text/css",
 				"title": "$:/plugins/bj/unieditor/unieditor.css",
 				"tags": "$:/tags/Stylesheet"
+			}
+		},
+		{
+			"file": "libs.js",
+			"fields": {
+				"type": "application/javascript",
+				"title": "$:/plugins/tiddlywiki/unicode/libs.js",
+				"module-type": "library"
 			}
 		}
 	]
