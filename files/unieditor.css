@@ -61,5 +61,14 @@ div.unieditor   pre.unieditor__pre {
   /*width:fit-content;*/
 }
 
+/*classes to stop overflow when resizing causing a scrollbar missalinement */
+
+.overflowy{
+ overflow-y:scroll!important;
+}
+
+.NoOverflowy::-webkit-scrollbar {
+  display: none;
+}
 
 

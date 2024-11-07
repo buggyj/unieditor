@@ -33,6 +33,8 @@ setCode (code) {this.textLayer.setCode(code)}
     this.canvas.classList.add('unieditor__pre','unieditor_controlwrap')
     this.canvas.classList.add(`language-${opts.language||'html'}`)
     if (!!opts.height) {this.canvas.classList.add('overflowy')}
+    else if (!opts.dev) {this.canvas.classList.add('overflowy')}
+    
     if (opts.textReverse) this.canvas.setAttribute('dir', 'rtl')
   }
  
@@ -54,11 +56,16 @@ setCode (code) {this.textLayer.setCode(code)}
 	this.callback = callback
 	this.opts = opts
 	this.updateCanvas = updateCanvas
+	
     this.txtarea = document.createElement('textarea')
     parent.appendChild(this.txtarea)
     this.txtarea.classList.add('unieditor__textarea','unieditor_controlwrap')
     this.txtarea.classList.add(`lang-${opts.language||'html'}`)
+    
     if (!!opts.height) {this.txtarea.classList.add('overflowy')}
+    else    if (opts.dev) {this.txtarea.classList.add('NoOverflowy');}//chrome  only
+			else {this.txtarea.classList.add('overflowy')}
+    
     if (opts.textReverse) this.txtarea.setAttribute('dir', 'rtl')
     if (opts.spellCheck) {
         if (Array.isArray(opts.spellCheck)) {console.log(opts)
