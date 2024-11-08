@@ -86,8 +86,10 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 		var handler = this.editorOperations[event.param];
 		if(handler) {
 			handler.call(this,event,operation);
-		}
-		var newText = operation.text.substring(0,operation.cutStart) + operation.replacement + operation.text.substring(operation.cutEnd);
+		}	
+		if(operation.replacement !== null) {
+			var newText = operation.text.substring(0,operation.cutStart) + operation.replacement + operation.text.substring(operation.cutEnd);
+		}else var newText = operation.text;
 		// Execute the operation via the engine
 		//var newText = this.engine.executeTextOperation(operation);
 		console.log(operation)

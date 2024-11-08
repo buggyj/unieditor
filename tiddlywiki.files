@@ -47,7 +47,16 @@
 	{
 		"file": "editortoolbar_search.tid",
 		"fields": {
-			"title": "$:/bj/ui/EditorToolbar/search"
+			"title": "$:/bj/ui/EditorToolbar/search",
+			"button-classes": "tc-text-editor-toolbar-item-start-group",
+			"caption": "search",
+			"condition": "[<targetTiddler>!has[type]] [<targetTiddler>type[text/vnd.tiddlywiki]]",
+			"description": "{{$:/language/Buttons/Link/Hint}}",
+			"dropdown": "$:/bj/ui/EditorToolbar/search-dropdown",
+			"icon": "$:/core/images/advanced-search-button",
+			"shortcuts": "",
+			"tags": "$:/tags/EditorToolbar",
+			"type": "text/vnd.tiddlywiki"
 		}
 	},
 	{
