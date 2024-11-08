@@ -39,6 +39,18 @@
 		}
 	},	
 	{
+		"file": "editortoolbar_search_dropdown.tid",
+		"fields": {
+			"title": "$:/bj/ui/EditorToolbar/search-dropdown"
+		}
+	},
+	{
+		"file": "editortoolbar_search.tid",
+		"fields": {
+			"title": "$:/bj/ui/EditorToolbar/search"
+		}
+	},
+	{
 		"file": "csstype.tid",
 		"fields": {
 			"title": "$:/config/EditorTypeMappings/text/css"

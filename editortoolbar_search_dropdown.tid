@@ -1,0 +1,15 @@
+tags: 
+title: $:/bj/ui/EditorToolbar/search-dropdown
+type: text/vnd.tiddlywiki
+
+
+
+
+
+search for<$edit-text tiddler="$:/state/bjsearch" tag="input" default=""/>
+
+<$button> find
+<$action-sendmessage $message="tm-edit-text-operation" $param="make-link" text={{$:/state/bjsearch}} />
+<$action-deletetiddler $tiddler=<<dropdown-state>>
+/>
+</$button>

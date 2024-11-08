@@ -1,0 +1,10 @@
+button-classes: tc-text-editor-toolbar-item-start-group
+caption: search
+condition: [<targetTiddler>!has[type]] [<targetTiddler>type[text/vnd.tiddlywiki]]
+description: {{$:/language/Buttons/Link/Hint}}
+dropdown: $:/core/ui/EditorToolbar/search-dropdown
+icon: $:/core/images/advanced-search-button
+shortcuts: 
+tags: $:/tags/EditorToolbar
+title: $:/bj/ui/EditorToolbar/search
+type: text/vnd.tiddlywiki

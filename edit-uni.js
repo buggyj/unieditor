@@ -62,7 +62,7 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
  	this.domNodes.push(this.domNode);
 	
 	this.editopts.language=this.editInfo.type;
-	if (!this.instance)
+	//if (!this.instance) - need to destroy??
 		this.instance = new uniEditor(this.domNode, (code) => {
 			self.saveChanges(code);
 		}, this.editopts);
@@ -74,8 +74,14 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 		]);
 };
 	uniEditorWidget.prototype.handleEditTextOperationMessage = function(event) {
+		var operation;
+		if (event.param ==="make-link"){
+			// make highlight
+			this.createHighLightOP(event.paramObject.text);
+			return;
+		}
 		// Prepare information about the operation
-		var operation =this.createTextOperation();
+		operation =this.createTextOperation();
 		// Invoke the handler for the selected operation
 		var handler = this.editorOperations[event.param];
 		if(handler) {
@@ -87,6 +93,73 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 		console.log(operation)
 		this.instance.setCode(newText)
 	}; 
+	uniEditorWidget.prototype.createHighLightOP = function(searchTerm) {
+		
+function calculateSelectedTextPosition(textarea) {
+  const selectionStart = textarea.selectionStart;
+
+  if (selectionStart === textarea.selectionEnd) return; // No selection, so exit
+
+  // Assume each character has a width of 0.5em
+  const characterWidth = 0.5; // in em units
+
+  // Calculate maximum characters per line based on textarea width
+  const charsPerLine = Math.floor(textarea.clientWidth / (characterWidth * parseFloat(getComputedStyle(textarea).fontSize)));
+
+  // Get the text up to the selection start position
+  const textUpToSelection = textarea.value.substring(0, selectionStart);
+
+  // Initialize line and column counters
+  let line = 0;
+  let column = 0;
+
+  // Calculate line and column based on text up to selection
+  for (let i = 0; i < textUpToSelection.length; i++) {
+    if (textUpToSelection[i] === '\n') {
+      line++;
+      column = 0; // Reset column for the new line
+    } else if (column >= charsPerLine) {
+      // Handle automatic wrapping when column reaches charsPerLine
+      line++;
+      column = 0;
+    } else {
+      column++;
+    }
+  }
+
+  // Calculate X and Y positions
+  const coordX = column * characterWidth * parseFloat(getComputedStyle(textarea).fontSize); // in pixels
+  const coordY = line * parseFloat(getComputedStyle(textarea).lineHeight); // lineHeight in pixels
+
+  // Display coordinates
+  //document.getElementById("coordX").textContent = Math.round(coordX);
+  //document.getElementById("coordY").textContent = Math.round(coordY);
+  
+   console.log (coordY)
+	return Math.round(coordY);
+
+}
+
+
+		
+	  const textarea = this.domNode.querySelector('textarea');
+	  const text = textarea.value;
+	  if (!searchTerm) return; // Do nothing if the search term is empty
+
+	  const index = text.toLowerCase().indexOf(searchTerm.toLowerCase());
+
+	  if (index !== -1) {
+		// Highlight the search term by selecting the range
+		textarea.focus();
+		textarea.selectionStart = index;
+		textarea.selectionEnd = index + searchTerm.length;
+    // Scroll to the selected text
+		const lineHeight = parseFloat(window.getComputedStyle(textarea).lineHeight);
+		const linesAbove = text.slice(0, index).split("\n").length - 1;
+		textarea.scrollTop = calculateSelectedTextPosition(textarea)//linesAbove * lineHeight;
+	  } 
+	
+	}
 	uniEditorWidget.prototype.createTextOperation = function() {
 	var textarea = this.domNode.querySelector('textarea');
 	var operation = {
@@ -192,7 +265,7 @@ uniEditorWidget.prototype.refresh = function(changedTiddlers) {
         }
 		return true;
 	}
-	if(changedTiddlers[modetid]) {
+	if(changedTiddlers[modetid]) {//changes from toolbar buttons
 		var fields ={}
 		var mode = $tw.wiki.getTiddlerText(modetid)
 		if (mode ==="fixed") this.editopts.height = $tw.wiki.getTiddlerText(Heighttid)
