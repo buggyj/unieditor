@@ -12,6 +12,7 @@ exports.uniEditor = class uniEditor {
     this.canvasLayer = new canvas(this.editor,opts)
     this.textLayer = new textLayer(this.editor,this.canvasLayer.scrollCanvas,
 						this.canvasLayer.updateCanvas,this.resize,callback,opts)    
+	//this.doLayer =
   }
 
     resize = (newHeight) => {
@@ -21,7 +22,11 @@ exports.uniEditor = class uniEditor {
 setCode (code) {this.textLayer.setCode(code)}
 
   destroy(){
-    this.editor.remove();
+    this.editor.remove()
+    this.editor = null
+    this.canvasLayer = null
+    this.textLayer.destroy()
+    this.textLayer = null
   }
 }
 
@@ -39,7 +44,7 @@ setCode (code) {this.textLayer.setCode(code)}
   }
  
   updateCanvas = (code) => {
-	this.canvas.innerHTML = $tw.utils.htmlEncode(code)
+	this.canvas.innerHTML = utils.htmlEncode(code)
     highlightElement(this.canvas, false)
   }
   
@@ -97,7 +102,7 @@ setCode (code) {this.textLayer.setCode(code)}
   updateEditor (data) {
     this.code = data||this.txtarea.value
     this.updateCanvas(this.code)
-    this.containerResize(this.opts.height?this.opts.height:$tw.utils.resizeTextAreaToFit(this.txtarea,"100px")+"px");
+    this.containerResize(this.opts.height?this.opts.height:utils.resizeTextAreaToFit(this.txtarea,"100px")+"px");
     setTimeout(()=>{this.callback(this.code)}, 1)
   }
 

@@ -3,7 +3,7 @@ title: $:/plugins/bj/unieditor/edit-uni.js
 type: application/javascript
 module-type: widget
 
-adapter to uniEditor lib for editing code  files
+adapter for uniEditor lib for editing code files
 
 \*/
 (function(){
@@ -12,7 +12,7 @@ adapter to uniEditor lib for editing code  files
 /*global $tw: false */
 "use strict";
 
-var MIN_TEXT_AREA_HEIGHT = 100; // Minimum height of textareas in pixels
+var MIN_TEXT_AREA_HEIGHT = 100; //in px
 
 var Widget = require("$:/core/modules/widgets/widget.js").widget;
 var newid=0;
@@ -27,33 +27,37 @@ var uniEditorWidget = function(parseTreeNode,options) {
 if($tw.browser) {
 var uniEditor =	require("$:/plugins/bj/unieditor/unieditor.js").uniEditor;
 }
-/*
-Inherit from the base widget class
-*/
+
 uniEditorWidget.prototype = new Widget();
 
-/*
-Render this widget into the DOM
-*/
 
 uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	var self = this;
 	console.log("enter render")
     this.saving = false;
-	// Save the parent dom node
 	this.parentDomNode = parent;
-	// Compute our attributes
+	console.log(this.children)
+	
 	this.computeAttributes();
-	// Execute our logic
 	this.execute();
-	// Create our element
- 	// Create the wrapper for the toolbar and render its content
+	//only edit with tool bar, else use text editor
+	if  (!this.children || this.children.length == 0 || this.document.isTiddlyWikiFakeDom){
+		this.makeChildWidgets([{
+			type: "edit-" + "text",
+			attributes: this.parseTreeNode.attributes,
+			children: this.parseTreeNode.children
+		}]);
+		this.renderChildren(parent,nextSibling);
+		return;
+	}
+	
+ 	// create toolbarNode so that toolbar is above
 	this.toolbarNode = this.document.createElement("div");
 	this.toolbarNode.className = "tc-editor-toolbar";
 	parent.insertBefore(this.toolbarNode,nextSibling);
 	this.domNodes.push(this.toolbarNode);
 	this.editInfo = this.getEditInfo();
- 	// Render toolbar child widgets
+ 
 	this.renderChildren(this.toolbarNode,null);
 	this.domNode = this.document.createElement("div");
 	this.domNode.classList.add("tc-edit-texteditor","tc-edit-texteditor-body")
@@ -62,13 +66,13 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
  	this.domNodes.push(this.domNode);
 	
 	this.editopts.language=this.editInfo.type;
-	//if (!this.instance) - need to destroy??
+	//if (!this.instance) - need to destroy?? gurumed
 		this.instance = new uniEditor(this.domNode, (code) => {
 			self.saveChanges(code);
 		}, this.editopts);
 
 	this.instance.setCode(this.editInfo.value)
-	// Add widget message listeners
+ 
 		this.addEventListeners([
 			{type: "tm-edit-text-operation", handler: "handleEditTextOperationMessage"}
 		]);
@@ -97,53 +101,44 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	}; 
 	uniEditorWidget.prototype.createHighLightOP = function(searchTerm) {
 		
-function calculateSelectedTextPosition(textarea) {
-  const selectionStart = textarea.selectionStart;
+		function calculateSelectedTextPosition(textarea) {
+		  const selectionStart = textarea.selectionStart;
 
-  if (selectionStart === textarea.selectionEnd) return; // No selection, so exit
+		  if (selectionStart === textarea.selectionEnd) return; // No selection, so exit
 
-  // Assume each character has a width of 0.5em
-  const characterWidth = 0.5; // in em units
+		  // Assume each character has a width of 0.5em
+		  const characterWidth = 0.5; // in em units
 
-  // Calculate maximum characters per line based on textarea width
-  const charsPerLine = Math.floor(textarea.clientWidth / (characterWidth * parseFloat(getComputedStyle(textarea).fontSize)));
+		  // so charsPerLine = widthOfTextarea / charWidthInPx
+		  const charsPerLine = Math.floor(textarea.clientWidth / (characterWidth * parseFloat(getComputedStyle(textarea).fontSize)));
 
-  // Get the text up to the selection start position
-  const textUpToSelection = textarea.value.substring(0, selectionStart);
+		  // calc xy of selected text relative to start of textarea
+		  const textUpToSelection = textarea.value.substring(0, selectionStart);
 
-  // Initialize line and column counters
-  let line = 0;
-  let column = 0;
+		  // Initialize line and column counters
+		  let line = 0;
+		  let column = 0;
 
-  // Calculate line and column based on text up to selection
-  for (let i = 0; i < textUpToSelection.length; i++) {
-    if (textUpToSelection[i] === '\n') {
-      line++;
-      column = 0; // Reset column for the new line
-    } else if (column >= charsPerLine) {
-      // Handle automatic wrapping when column reaches charsPerLine
-      line++;
-      column = 0;
-    } else {
-      column++;
-    }
-  }
+		  // Calculate line and column based on text up to selection in chars
+		  for (let i = 0; i < textUpToSelection.length; i++) {
+			if (textUpToSelection[i] === '\n') {
+			  line++;
+			  column = 0; // Reset column for the new line
+			} else if (column >= charsPerLine) {
+			  //rapped line
+			  line++;
+			  column = 0;
+			} else {
+			  column++;
+			}
+		  }
 
-  // Calculate X and Y positions
-  const coordX = column * characterWidth * parseFloat(getComputedStyle(textarea).fontSize); // in pixels
-  const coordY = line * parseFloat(getComputedStyle(textarea).lineHeight); // lineHeight in pixels
+		  const coordY = line * parseFloat(getComputedStyle(textarea).lineHeight); // lineHeight in pixels
+		  return Math.round(coordY);
 
-  // Display coordinates
-  //document.getElementById("coordX").textContent = Math.round(coordX);
-  //document.getElementById("coordY").textContent = Math.round(coordY);
-  
-   console.log (coordY)
-	return Math.round(coordY);
-
-}
+		}//end of fn
 
 
-		
 	  const textarea = this.domNode.querySelector('textarea');
 	  const text = textarea.value;
 	  if (!searchTerm) return; // Do nothing if the search term is empty
@@ -213,9 +208,7 @@ uniEditorWidget.prototype.getEditInfo = function() {
 	return {value: value, update: update, type: type};
 };
 
-/*
-Compute the internal state of the widget
-*/
+
 uniEditorWidget.prototype.execute = function() {
 	// Get our parameters
 	this.editTitle = this.getAttribute("tiddler",this.getVariable("currentTiddler"));
@@ -256,16 +249,17 @@ uniEditorWidget.prototype.refresh = function(changedTiddlers) {
 		return true;
 	}
 	if(changedTiddlers[this.editTitle]) {
-		//BJ FIXED saving cause the widget to get redrawn
+		//BJ FIXED saving causes the widget to get redrawn
         //Gurumed - Only a 'saving' variable is needed and every time we 
         //save we set to true, and then test here, if true set to false and
         //return, else refresh
         if (this.saving) {
             this.saving = false
+            return false
         }else {
             this.refreshSelf()
+            return true
         }
-		return true;
 	}
 	if(changedTiddlers[modetid]) {//changes from toolbar buttons
 		var fields ={}

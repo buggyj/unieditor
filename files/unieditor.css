@@ -1,7 +1,7 @@
 
 /* immediate children of the contain div (with class of unieditor) will be a
- * the layers of the editor -  canvas, do, and text,
- *  they overlay completely in that order, canvas on top*/
+ * the layers of the editor -  text, do, and canvas,
+ *  they overlay completely in that order, canvas on bottom*/
  
 .unieditor {
 /* hight will be set in js*/
