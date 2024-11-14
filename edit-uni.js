@@ -11,7 +11,7 @@ adapter for uniEditor lib for editing code files
 /*jslint node: true, browser: true */
 /*global $tw: false */
 "use strict";
-
+const consolelog = function () {}
 var MIN_TEXT_AREA_HEIGHT = 100; //in px
 
 var Widget = require("$:/core/modules/widgets/widget.js").widget;
@@ -33,10 +33,10 @@ uniEditorWidget.prototype = new Widget();
 
 uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	var self = this;
-	console.log("enter render")
+	consolelog("enter render")
     this.saving = false;
 	this.parentDomNode = parent;
-	console.log(this.children)
+	consolelog(this.children)
 	
 	this.computeAttributes();
 	this.execute();
@@ -70,8 +70,8 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 		this.instance = new uniEditor(this.domNode, (code) => {
 			self.saveChanges(code);
 		}, this.editopts);
-
-	this.instance.setCode(this.editInfo.value)
+	//gurumed the following causes an indirect save -- should be sorted out
+	this.instance.setCode(this.editInfo.value);consolelog("rend " + this.editInfo.value)
  
 		this.addEventListeners([
 			{type: "tm-edit-text-operation", handler: "handleEditTextOperationMessage"}
@@ -83,6 +83,10 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 			// make highlight
 			this.createHighLightOP(event.paramObject.text);
 			return;
+		}
+		if (event.param ==="historyRedo" ||event.param ==="historyUndo") {
+			this.instance.doAction(event.param)
+			return
 		}
 		// Prepare information about the operation
 		operation =this.createTextOperation();
@@ -96,7 +100,7 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 		}else var newText = operation.text;
 		// Execute the operation via the engine
 		//var newText = this.engine.executeTextOperation(operation);
-		console.log(operation)
+		consolelog('oper '+operation)
 		this.instance.setCode(newText)
 	}; 
 	uniEditorWidget.prototype.createHighLightOP = function(searchTerm) {
@@ -203,7 +207,7 @@ uniEditorWidget.prototype.getEditInfo = function() {
 			updateFields[self.editField] = value;
             self.saving = true;
 			self.wiki.addTiddler(new $tw.Tiddler(self.wiki.getCreationFields(),tiddler,updateFields,self.wiki.getModificationFields()));
-		};console.log("type is "+type)
+		};consolelog("type is "+type)
 	if (type in this.mappings) type = this.mappings[type]||type
 	return {value: value, update: update, type: type};
 };
@@ -281,7 +285,7 @@ uniEditorWidget.prototype.refresh = function(changedTiddlers) {
 	};		
 	if(changedTiddlers["$:/plugins/bj/unieditor/edoptions.json"]) {
 		let self = this
-		console.log("refesh")
+		consolelog("refesh")
 		this.domNode.innerHTML=""
 		this.instance = new uniEditor(this.domNode, (code) => {
 		self.saveChanges(code);

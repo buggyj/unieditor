@@ -1,5 +1,6 @@
 "use strict";
 
+const consolelog = function () {}
 const {highlightElement,utils} = require("$:/plugins/tiddlywiki/unicode/libs.js");
 
 exports.uniEditor = class uniEditor {
@@ -20,8 +21,9 @@ exports.uniEditor = class uniEditor {
   }
 
 setCode (code) {this.textLayer.setCode(code)}
+doAction (action) {this.textLayer.doAction(action)}
 
-  destroy(){
+destroy(){
     this.editor.remove()
     this.editor = null
     this.canvasLayer = null
@@ -83,14 +85,102 @@ setCode (code) {this.textLayer.setCode(code)}
 
     this.txtarea.addEventListener('keydown', this.whenKey = (e) => {
       if  (this.doTabs(e)||this.doBrackets(e)||this.doIndents(e)||this.handleHistory(e))
-             this.updateEditor()//bj mod
+             if (!this.dirty) {
+             this.updateTop() 
+             this.dirty = true
+		 } 
+		  this.updateEditor()//bj mod
     })
     this.txtarea.addEventListener('input', this.whenInput = (e) => {
+		if (!this.dirty) {
+			this.updateTop()
+		    this.dirty = true
+		}
 		this.updateEditor()
     })
     this.txtarea.addEventListener('scroll', this.whenScroll = (e) => {
 		scrollCanvas(e)
     })
+    
+    this.stack = []
+    this.current = 0
+    this.top = 0
+    this.bottom = 0 
+    this.maxSize = opts.historySize||32
+    this.dirty = true//gurumed ??
+	
+	this.txtarea.addEventListener("beforeinput", e => {
+		let value
+		switch (e.inputType) {
+		  case 'historyRedo':
+		  e.preventDefault();
+		  if(this.dirty) return;//top of history
+			value = this.pullRedo()
+			console.log("uhistredo "+value)
+			if (value === null ) {
+				this.txtarea.value=this.dirtyBuffer
+				this.updateEditor(this.dirtyBuffer)
+				this.dirty = true
+				return
+			}
+			this.txtarea.value=value
+			this.updateEditor(value)
+			
+			break
+		  case 'historyUndo':
+		  	if (this.dirty) {
+				this.dirtyBuffer =this.txtarea.value
+				this.dirty = false
+			}
+			value = this.pullUndo()
+			e.preventDefault();console.log("uhistoryundo "+value)
+			if (value === null) return
+			this.txtarea.value=value
+			this.updateEditor(value)
+			break
+		  case 'insertFromPaste':
+		  case 'deleteByCut':
+		  case 'insertFromDrop':
+			if (!this.dirty) this.updateTop()
+			this.push(this.txtarea.value)
+			break
+		  default:
+			break
+		}		
+	})
+		
+	this.txtarea.addEventListener("keydown", e => {	
+					// Undo with Ctrl + Z
+		let value
+		if (e.ctrlKey && e.key === "z") {
+		 	if (this.dirty) {
+				this.dirtyBuffer =this.txtarea.value
+				this.dirty = false
+			}
+			value = this.pullUndo()
+			e.preventDefault();console.log("uhistoryundo "+value)
+			if (value === null) return
+			this.txtarea.value=value
+			this.updateEditor(value)
+		}
+		// Redo with Ctrl + Y
+		else if (e.ctrlKey && e.key === "y") {
+			e.preventDefault();
+			if(this.dirty) return;
+			value = this.pullRedo()
+			console.log("uhistredo "+value)
+			if (value === null ) {
+				this.txtarea.value=this.dirtyBuffer
+				this.updateEditor(this.dirtyBuffer)
+				this.dirty = true
+				return
+			}
+			this.txtarea.value=value
+			this.updateEditor(value)
+		}
+
+	})
+
   }
   
   destroy() {
@@ -107,8 +197,94 @@ setCode (code) {this.textLayer.setCode(code)}
   }
 
   setCode = (code) => {
+	 //and previous state to history
+	if (!this.dirty) this.updateTop()
+
+	if (this.bottom === 0){ 
+		this.push(code)		
+	}
+	else this.push(this.txtarea.value)
+	
     this.txtarea.value = code
     this.updateEditor(code)
+    this.dirty = true
+  }
+  
+  doAction = (action) => {
+	let value
+	switch (action) {
+	  case 'historyRedo':
+	  if(this.dirty) return;//top of history
+		value = this.pullRedo()
+		console.log("uhistredo "+value)
+		if (value === null ) {
+			this.txtarea.value=this.dirtyBuffer
+			this.updateEditor(this.dirtyBuffer)
+			this.dirty = true
+			return
+		}
+		this.txtarea.value=value
+		this.updateEditor(value)
+		
+		break
+	  case 'historyUndo':
+		if (this.dirty) {
+			this.dirtyBuffer =this.txtarea.value
+			this.dirty = false
+		}
+		value = this.pullUndo()
+		console.log("uhistoryundo "+value)
+		if (value === null) return
+		this.txtarea.value=value
+		this.updateEditor(value)
+		break
+	}
+  }
+  
+//--------------------history
+
+
+  // Push a new string onto the stack, update current, top, and check for maxSize overflow
+  push(value) { console.log("push " + value + "-" +this.current, this.top, this.dirty,this.stack)
+    // If we are in the middle of the stack, remove all items above the current index
+    if (this.current < this.top) {
+      this.stack = this.stack.slice(0, this.current + 1);
+    }
+    this.stack.push(value)
+    this.current++
+    this.top = this.current
+
+    // Check if we exceeded maxSize, if so, remove the bottom item
+    if (this.stack.length > this.maxSize) {
+      this.stack.shift();  // Remove the first item (bottom of the stack)
+      this.current--;      // Adjust current pointer due to shift
+      this.top--;          // Adjust top pointer due to shift
+    }
+  }
+
+  // Undo action, decrements current index and returns stack[current] if possible
+  pullUndo() {console.log("undo "+ this.current, " "+this.top, this.dirty,this.stack)
+    if (this.current > this.bottom) {
+      this.current--;
+      return this.stack[this.current];
+    }
+    return null;
+  }
+
+  // Redo action, increments current index and returns stack[current] if possible
+  pullRedo() {console.log("redo",this.current, this.top,this.dirty,this.stack)
+    if (this.current < this.top) {
+      this.current++;
+      if (this.current < this.top) return this.stack[this.current];
+    }
+	return null;
+  }
+
+  updateTop () { console.log ("updatetop", this.dirty,this.stack)
+	  this.current++
+	  this.stack = this.stack.slice(0, this.current);
+	  this.top = this.current
+	  this.dirty = true
   }
   
 //--------------------tabs
@@ -123,6 +299,7 @@ setCode (code) {this.textLayer.setCode(code)}
 		let tab = this.opts.tabs;
 		const txtarea = this.txtarea
 		event.preventDefault(); 
+		this.push(txtarea.value)
 		let start = txtarea.selectionStart
 		const end = txtarea.selectionEnd;
 		
@@ -166,6 +343,7 @@ setCode (code) {this.textLayer.setCode(code)}
     if (!brackets[key]) return false
     event.preventDefault()
     const txtarea = this.txtarea
+    this.push(txtarea.value)
 	const start = txtarea.selectionStart
 	const end = txtarea.selectionEnd
 	let selectedText = ""
@@ -182,7 +360,8 @@ setCode (code) {this.textLayer.setCode(code)}
     //gurumed - history for undo/redo could be implemented on newline here
 	const txtarea = this.txtarea
 	event.preventDefault(); 
-	
+			this.push(txtarea.value)
+			
 	const caretPosition = txtarea.selectionStart;
 	const lineStart = txtarea.value.lastIndexOf('\n', caretPosition - 1) + 1;
 	const currentLine = txtarea.value.slice(lineStart, caretPosition);
@@ -203,43 +382,8 @@ setCode (code) {this.textLayer.setCode(code)}
   }
   //--------------------history
   handleHistory (e) {  
-/*
-	// Undo with Ctrl + Z
-	if (e.ctrlKey && e.key === "z") {
-		e.preventDefault(); 
-		undo();
-	}
-	// Redo with Ctrl + Y
-	else if (e.ctrlKey && e.key === "y") {
-		e.preventDefault(); 
-		redo();
-	}
-
-// this is not correct! must handle repeat crt-z and then crt-y
-// there needs to be a way to handle history for current line without
-// storing the whole text - probably linehistory limited to words.
-// linehistory - startOfLine, endOfLine(updated by edits)
-// a space triggers storing, movement off line - store and start a new one.
- 
-    function undo() {
-        if (historyStack.length > 0) {
-            redoStack.push(currentText); 
-            currentText = historyStack.pop(); 
-            textarea.value = currentText;
-        }
-    }
-
-    function redo() {
-        if (redoStack.length > 0) {
-            historyStack.push(currentText); 
-            currentText = redoStack.pop(); 
-            textarea.value = currentText;
-        }
-    }
-    // function whenSpace() {} add to line-hisory
-    // function whenLineFeed() add to history
-       
-*/	  
+	  if (e.key === ' ' ||e.key === '\n') 	this.push(this.txtarea.value)
+  
     return false;
   }
 }
