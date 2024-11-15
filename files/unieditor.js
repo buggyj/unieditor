@@ -75,7 +75,7 @@ destroy(){
     
     if (opts.textReverse) this.txtarea.setAttribute('dir', 'rtl')
     if (opts.spellCheck) {
-        if (Array.isArray(opts.spellCheck)) {console.log(opts)
+        if (Array.isArray(opts.spellCheck)) {consolelog(opts)
          if (opts.spellCheck.indexOf(opts.language||'html') ===-1) this.txtarea.setAttribute('spellcheck', 'false')
 		} else   this.txtarea.setAttribute('spellcheck', 'false')
 	}  
@@ -102,6 +102,7 @@ destroy(){
 		scrollCanvas(e)
     })
     
+    this.cursor = []
     this.stack = []
     this.current = 0
     this.top = 0
@@ -116,15 +117,16 @@ destroy(){
 		  e.preventDefault();
 		  if(this.dirty) return;//top of history
 			value = this.pullRedo()
-			console.log("uhistredo "+value)
+			consolelog("uhistredo2 "+value)
 			if (value === null ) {
 				this.txtarea.value=this.dirtyBuffer
 				this.updateEditor(this.dirtyBuffer)
 				this.dirty = true
 				return
 			}
-			this.txtarea.value=value
-			this.updateEditor(value)
+			this.txtarea.value=value.txt
+			this.setCursor(value.pos)
+			this.updateEditor(value.txt)
 			
 			break
 		  case 'historyUndo':
@@ -133,10 +135,11 @@ destroy(){
 				this.dirty = false
 			}
 			value = this.pullUndo()
-			e.preventDefault();console.log("uhistoryundo "+value)
+			e.preventDefault();consolelog("uhistoryundo2 "+value)
 			if (value === null) return
-			this.txtarea.value=value
-			this.updateEditor(value)
+			this.txtarea.value=value.txt
+			this.setCursor(value.pos)
+			this.updateEditor(value.txt)
 			break
 		  case 'insertFromPaste':
 		  case 'deleteByCut':
@@ -148,7 +151,7 @@ destroy(){
 			break
 		}		
 	})
-		
+	
 	this.txtarea.addEventListener("keydown", e => {	
 					// Undo with Ctrl + Z
 		let value
@@ -158,25 +161,27 @@ destroy(){
 				this.dirty = false
 			}
 			value = this.pullUndo()
-			e.preventDefault();console.log("uhistoryundo "+value)
+			e.preventDefault();consolelog("uhistoryundo "+value)
 			if (value === null) return
-			this.txtarea.value=value
-			this.updateEditor(value)
+			this.txtarea.value=value.txt
+			this.setCursor(value.pos)
+			this.updateEditor(value.txt)
 		}
 		// Redo with Ctrl + Y
 		else if (e.ctrlKey && e.key === "y") {
 			e.preventDefault();
 			if(this.dirty) return;
 			value = this.pullRedo()
-			console.log("uhistredo "+value)
+			consolelog("uhistredo "+value)
 			if (value === null ) {
 				this.txtarea.value=this.dirtyBuffer
 				this.updateEditor(this.dirtyBuffer)
 				this.dirty = true
 				return
 			}
-			this.txtarea.value=value
-			this.updateEditor(value)
+			this.txtarea.value=value.txt
+			this.setCursor(value.pos)
+			this.updateEditor(value.txt)
 		}
 
 	})
@@ -196,14 +201,20 @@ destroy(){
     setTimeout(()=>{this.callback(this.code)}, 1)
   }
 
-  setCode = (code) => {
+  setCursor = (pos) => {consolelog(pos,"=====")
+	  if (pos === -1) return;
+	   this.txtarea.setSelectionRange(pos, pos);
+	   this.txtarea.focus()
+  }
+  
+  setCode = (code) => { 
 	 //and previous state to history
 	if (!this.dirty) this.updateTop()
 
-	if (this.bottom === 0){ 
-		this.push(code)		
+	if (this.current === 0){ 
+		this.push(code)	;consolelog('*****************************')	
 	}
-	else this.push(this.txtarea.value)
+	else {this.push(this.txtarea.value,this.txtarea.selectionEnd); consolelog(';;;;;;',this.txtarea.value,this.txtarea.selectionEnd)}
 	
     this.txtarea.value = code
     this.updateEditor(code)
@@ -216,15 +227,16 @@ destroy(){
 	  case 'historyRedo':
 	  if(this.dirty) return;//top of history
 		value = this.pullRedo()
-		console.log("uhistredo "+value)
+		consolelog("uhistredo "+value)
 		if (value === null ) {
 			this.txtarea.value=this.dirtyBuffer
 			this.updateEditor(this.dirtyBuffer)
 			this.dirty = true
 			return
 		}
-		this.txtarea.value=value
-		this.updateEditor(value)
+		this.txtarea.value=value.txt
+		this.setCursor(value.pos)
+		this.updateEditor(value.txt)
 		
 		break
 	  case 'historyUndo':
@@ -233,10 +245,11 @@ destroy(){
 			this.dirty = false
 		}
 		value = this.pullUndo()
-		console.log("uhistoryundo "+value)
+		consolelog("uhistoryundo "+value)
 		if (value === null) return
-		this.txtarea.value=value
-		this.updateEditor(value)
+		this.txtarea.value=value.txt
+		this.setCursor(value.pos)
+		this.updateEditor(value.txt)
 		break
 	}
   }
@@ -245,44 +258,48 @@ destroy(){
 
 
   // Push a new string onto the stack, update current, top, and check for maxSize overflow
-  push(value) { console.log("push " + value + "-" +this.current, this.top, this.dirty,this.stack)
+  push(value,pos =-1) { consolelog("push " + value + "-" +this.current, this.top, this.dirty,this.stack,this.cursor)
     // If we are in the middle of the stack, remove all items above the current index
     if (this.current < this.top) {
       this.stack = this.stack.slice(0, this.current + 1);
+      this.cursor = this.cursor.slice(0, this.current + 1);
     }
     this.stack.push(value)
+    this.cursor.push(pos)
     this.current++
     this.top = this.current
 
     // Check if we exceeded maxSize, if so, remove the bottom item
     if (this.stack.length > this.maxSize) {
       this.stack.shift();  // Remove the first item (bottom of the stack)
+      this.cursor.shift();  // Remove the first item (bottom of the stack)
       this.current--;      // Adjust current pointer due to shift
       this.top--;          // Adjust top pointer due to shift
     }
   }
 
   // Undo action, decrements current index and returns stack[current] if possible
-  pullUndo() {console.log("undo "+ this.current, " "+this.top, this.dirty,this.stack)
+  pullUndo() {consolelog("undo "+ this.current, " "+this.top, this.dirty,this.stack, this.cursor)
     if (this.current > this.bottom) {
       this.current--;
-      return this.stack[this.current];
+      return {txt:this.stack[this.current],pos:this.cursor[this.current]};
     }
     return null;
   }
 
   // Redo action, increments current index and returns stack[current] if possible
-  pullRedo() {console.log("redo",this.current, this.top,this.dirty,this.stack)
+  pullRedo() {consolelog("redo",this.current, this.top,this.dirty,this.stack, this.cursor)
     if (this.current < this.top) {
       this.current++;
-      if (this.current < this.top) return this.stack[this.current];
+      if (this.current < this.top) return {txt:this.stack[this.current], pos:this.cursor[this.current]};
     }
 	return null;
   }
 
-  updateTop () { console.log ("updatetop", this.dirty,this.stack)
+  updateTop () { consolelog ("updatetop", this.dirty,this.stack,this.cursor)
 	  this.current++
 	  this.stack = this.stack.slice(0, this.current);
+	  this.cursor = this.cursor.slice(0, this.current);
 	  this.top = this.current
 	  this.dirty = true
   }
@@ -299,7 +316,7 @@ destroy(){
 		let tab = this.opts.tabs;
 		const txtarea = this.txtarea
 		event.preventDefault(); 
-		this.push(txtarea.value)
+		this.push(txtarea.value,txtarea.selectionEnd)
 		let start = txtarea.selectionStart
 		const end = txtarea.selectionEnd;
 		
@@ -343,7 +360,7 @@ destroy(){
     if (!brackets[key]) return false
     event.preventDefault()
     const txtarea = this.txtarea
-    this.push(txtarea.value)
+    this.push(txtarea.value,txtarea.selectionEnd)
 	const start = txtarea.selectionStart
 	const end = txtarea.selectionEnd
 	let selectedText = ""
@@ -360,7 +377,7 @@ destroy(){
     //gurumed - history for undo/redo could be implemented on newline here
 	const txtarea = this.txtarea
 	event.preventDefault(); 
-			this.push(txtarea.value)
+			this.push(txtarea.value,txtarea.selectionEnd)
 			
 	const caretPosition = txtarea.selectionStart;
 	const lineStart = txtarea.value.lastIndexOf('\n', caretPosition - 1) + 1;
@@ -382,7 +399,7 @@ destroy(){
   }
   //--------------------history
   handleHistory (e) {  
-	  if (e.key === ' ' ||e.key === '\n') 	this.push(this.txtarea.value)
+	  if (e.key === ' ' ||e.key === '\n') 	this.push(this.txtarea.value,this.txtarea.selectionEnd)
   
     return false;
   }
