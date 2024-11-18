@@ -6,5 +6,6 @@
         "tw"
     ],
     "height": "80vh",
+    "historySize":"32",
     "language": "tw"
 }

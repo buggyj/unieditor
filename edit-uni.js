@@ -57,7 +57,9 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	parent.insertBefore(this.toolbarNode,nextSibling);
 	this.domNodes.push(this.toolbarNode);
 	this.editInfo = this.getEditInfo();
- 
+     
+    this.lastSearch = "" 
+    this.lastReplace = ""
 	this.renderChildren(this.toolbarNode,null);
 	this.domNode = this.document.createElement("div");
 	this.domNode.classList.add("tc-edit-texteditor","tc-edit-texteditor-body")
@@ -69,7 +71,7 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	//if (!this.instance) - need to destroy?? gurumed
 		this.instance = new uniEditor(this.domNode, (code) => {
 			self.saveChanges(code);
-		}, this.editopts);
+		}, this.handleKeydownEvent.bind(this), this.editopts);
 	//gurumed the following causes an indirect save -- should be sorted out
 	this.instance.setCode(this.editInfo.value);consolelog("rend " + this.editInfo.value)
  
@@ -79,15 +81,28 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 };
 	uniEditorWidget.prototype.handleEditTextOperationMessage = function(event) {
 		var operation;
-		if (event.param ==="make-link"){
-			// make highlight
-			this.createHighLightOP(event.paramObject.text);
-			return;
-		}
+		
 		if (event.param ==="historyRedo" ||event.param ==="historyUndo") {
 			this.instance.doAction(event.param)
 			return
+		}	
+			
+		if (event.param ==="replace-selection"){
+			//gurumed set last replace - used when used presses crtl-g -when it is implemented
+			this.lastSearch = event.paramObject.find
+			this.lastReplace = event.paramObject.text
+			// make highlight
+			this.createHighLightOP(event.paramObject.find,false);
+
 		}
+		if (event.param ==="replace-all"){
+			// make highlight
+			this.createHighLightOP(event.paramObject.find,false);
+			let content= this.domNode.querySelector('textarea').value;
+			this.instance.setCode(content.replaceAll( event.paramObject.find, event.paramObject.text));
+			return
+		}
+
 		// Prepare information about the operation
 		operation =this.createTextOperation();
 		// Invoke the handler for the selected operation
@@ -103,7 +118,7 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 		consolelog('oper '+operation)
 		this.instance.setCode(newText)
 	}; 
-	uniEditorWidget.prototype.createHighLightOP = function(searchTerm) {
+	uniEditorWidget.prototype.createHighLightOP = function(searchTerm,next) {
 		
 		function calculateSelectedTextPosition(textarea) {
 		  const selectionStart = textarea.selectionStart;
@@ -140,14 +155,15 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 		  const coordY = line * parseFloat(getComputedStyle(textarea).lineHeight); // lineHeight in pixels
 		  return Math.round(coordY);
 
-		}//end of fn
+		}//end of calculateSelectedTextPosition
 
 
 	  const textarea = this.domNode.querySelector('textarea');
 	  const text = textarea.value;
 	  if (!searchTerm) return; // Do nothing if the search term is empty
-
-	  const index = text.toLowerCase().indexOf(searchTerm.toLowerCase());
+	  let start = 0;
+	  if (next) start = textarea.selectionEnd||0
+	  const index = text.toLowerCase().indexOf(searchTerm.toLowerCase(),start);
 
 	  if (index !== -1) {
 		// Highlight the search term by selecting the range
@@ -161,12 +177,12 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	  } 
 	
 	}
-	uniEditorWidget.prototype.createTextOperation = function() {
+	uniEditorWidget.prototype.createTextOperation = function(begin,end) {
 	var textarea = this.domNode.querySelector('textarea');
 	var operation = {
 		text: textarea.value,
-		selStart: textarea.selectionStart,
-		selEnd: textarea.selectionEnd,
+		selStart: begin||textarea.selectionStart,
+		selEnd: end||textarea.selectionEnd,
 		cutStart: null,
 		cutEnd: null,
 		replacement: null,
@@ -177,6 +193,37 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	return operation;
 };
 //uniEditorWidget.prototype.destroy = function(){}
+
+// from tiddlywiki factory.js
+uniEditorWidget.prototype.handleKeydownEvent = function(event) {
+	// Check for a keyboard shortcut
+	if(this.toolbarNode) {
+		//crtl-g handled gurumed - probably not needed
+		//if (event.ctrlKey && event.key === "g") {
+		//	event.preventDefault();
+		//	this.createHighLightOP(this.lastSearch,true);
+		//	return true
+		//}
+		var shortcutElements = this.toolbarNode.querySelectorAll("[data-tw-keyboard-shortcut]");
+		for(var index=0; index<shortcutElements.length; index++) {
+			var el = shortcutElements[index],
+				shortcutData = el.getAttribute("data-tw-keyboard-shortcut"),
+				keyInfoArray = $tw.keyboardManager.parseKeyDescriptors(shortcutData,{
+					wiki: this.wiki
+				});
+			if($tw.keyboardManager.checkKeyDescriptors(event,keyInfoArray)) {
+				var clickEvent = this.document.createEvent("Events");
+				clickEvent.initEvent("click",true,false);
+				el.dispatchEvent(clickEvent);
+				event.preventDefault();
+				event.stopPropagation();
+				return true;
+			}
+		}
+	}
+	// Otherwise, process the keydown normally
+	return false;
+};
 /*
 Get the tiddler being edited and current value
 */

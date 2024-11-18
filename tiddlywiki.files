@@ -45,17 +45,25 @@
 		}
 	},
 	{
+		"file": "customiconchange.tid",
+		"fields": {
+			"title": "$:/bj/customiconchange",
+			"tags": "$:/tags/Image"
+		}
+	},
+	{
 		"file": "editortoolbar_search.tid",
 		"fields": {
 			"title": "$:/bj/ui/EditorToolbar/search",
 			"button-classes": "tc-text-editor-toolbar-item-start-group",
-			"caption": "search",
+			"caption": "replace",
 			"condition": "[<targetTiddler>!has[type]] [<targetTiddler>type[text/vnd.tiddlywiki]]",
-			"description": "{{$:/language/Buttons/Link/Hint}}",
+			"description": "replace text",
 			"dropdown": "$:/bj/ui/EditorToolbar/search-dropdown",
-			"icon": "$:/core/images/advanced-search-button",
+			"icon": "$:/bj/customiconchange",
 			"shortcuts": "",
 			"tags": "$:/tags/EditorToolbar",
+			"list-before":"",
 			"type": "text/vnd.tiddlywiki"
 		}
 	},

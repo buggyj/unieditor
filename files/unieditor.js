@@ -4,7 +4,7 @@ const consolelog = function () {}
 const {highlightElement,utils} = require("$:/plugins/tiddlywiki/unicode/libs.js");
 
 exports.uniEditor = class uniEditor {
-  constructor (parent, callback, opts) {
+  constructor (parent, callback, callkey, opts) {
     opts = opts||{}
     this.events = {}
     this.editor = document.createElement('div')
@@ -12,7 +12,7 @@ exports.uniEditor = class uniEditor {
     this.editor.classList.add('unieditor')
     this.canvasLayer = new canvas(this.editor,opts)
     this.textLayer = new textLayer(this.editor,this.canvasLayer.scrollCanvas,
-						this.canvasLayer.updateCanvas,this.resize,callback,opts)    
+						this.canvasLayer.updateCanvas,this.resize,callback,callkey,opts)    
 	//this.doLayer =
   }
 
@@ -58,9 +58,10 @@ destroy(){
 }   
 //===============text area
   class textLayer {
-	constructor(parent, scrollCanvas, updateCanvas, resize, callback, opts) {
+	constructor(parent, scrollCanvas, updateCanvas, resize, callback, callkey, opts) {
 	this.containerResize = resize
 	this.callback = callback
+	this.callkey = callkey
 	this.opts = opts
 	this.updateCanvas = updateCanvas
 	
@@ -84,7 +85,7 @@ destroy(){
     this.doIndents =  (opts.indents)? this.handleIndents:(e)=>{return false};   
 
     this.txtarea.addEventListener('keydown', this.whenKey = (e) => {
-      if  (this.doTabs(e)||this.doBrackets(e)||this.doIndents(e)||this.handleHistory(e))
+      if  (this.doTabs(e)||this.doBrackets(e)||this.doIndents(e)||this.handleHistory(e)||this.callkey(e))
              if (!this.dirty) {
              this.updateTop() 
              this.dirty = true
@@ -120,6 +121,7 @@ destroy(){
 			consolelog("uhistredo2 "+value)
 			if (value === null ) {
 				this.txtarea.value=this.dirtyBuffer
+				this.setCursor(this.dirtyCursor)
 				this.updateEditor(this.dirtyBuffer)
 				this.dirty = true
 				return
@@ -132,6 +134,7 @@ destroy(){
 		  case 'historyUndo':
 		  	if (this.dirty) {
 				this.dirtyBuffer =this.txtarea.value
+				this.dirtyCursor =this.txtarea.selectionEnd
 				this.dirty = false
 			}
 			value = this.pullUndo()
@@ -144,8 +147,9 @@ destroy(){
 		  case 'insertFromPaste':
 		  case 'deleteByCut':
 		  case 'insertFromDrop':
+		  case 'deleteByDrag':
 			if (!this.dirty) this.updateTop()
-			this.push(this.txtarea.value)
+			this.push(this.txtarea.value,this.txtarea.selectionEnd)
 			break
 		  default:
 			break
@@ -158,6 +162,7 @@ destroy(){
 		if (e.ctrlKey && e.key === "z") {
 		 	if (this.dirty) {
 				this.dirtyBuffer =this.txtarea.value
+				this.dirtyCursor =this.txtarea.selectionEnd
 				this.dirty = false
 			}
 			value = this.pullUndo()
@@ -175,6 +180,7 @@ destroy(){
 			consolelog("uhistredo "+value)
 			if (value === null ) {
 				this.txtarea.value=this.dirtyBuffer
+				this.setCursor(this.dirtyCursor)
 				this.updateEditor(this.dirtyBuffer)
 				this.dirty = true
 				return
@@ -230,6 +236,7 @@ destroy(){
 		consolelog("uhistredo "+value)
 		if (value === null ) {
 			this.txtarea.value=this.dirtyBuffer
+			this.setCursor(this.dirtyCursor)
 			this.updateEditor(this.dirtyBuffer)
 			this.dirty = true
 			return
@@ -242,6 +249,7 @@ destroy(){
 	  case 'historyUndo':
 		if (this.dirty) {
 			this.dirtyBuffer =this.txtarea.value
+			this.dirtyCursor =this.txtarea.selectionEnd
 			this.dirty = false
 		}
 		value = this.pullUndo()
