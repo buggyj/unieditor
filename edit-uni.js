@@ -30,11 +30,13 @@ var uniEditor =	require("$:/plugins/bj/unieditor/unieditor.js").uniEditor;
 
 uniEditorWidget.prototype = new Widget();
 
-
+const modetid="$:/config/TextEditor/EditorHeight/Mode"
+const Heighttid="$:/config/TextEditor/EditorHeight/Height"
 uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	var self = this;
 	consolelog("enter render")
     this.saving = false;
+    this.passThru = false;
 	this.parentDomNode = parent;
 	consolelog(this.children)
 	
@@ -42,6 +44,7 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	this.execute();
 	//only edit with tool bar, else use text editor
 	if  (!this.children || this.children.length == 0 || this.document.isTiddlyWikiFakeDom){
+		this.passThru = true;
 		this.makeChildWidgets([{
 			type: "edit-" + "text",
 			attributes: this.parseTreeNode.attributes,
@@ -66,7 +69,9 @@ uniEditorWidget.prototype.render = function(parent,nextSibling) {
 	this.domNode.style.display = "inline-block";
 	parent.insertBefore(this.domNode,nextSibling);
  	this.domNodes.push(this.domNode);
-	
+	var mode = $tw.wiki.getTiddlerText(modetid)
+		if (mode ==="fixed") this.editopts.height = $tw.wiki.getTiddlerText(Heighttid)
+		else this.editopts.height =""
 	this.editopts.language=this.editInfo.type;
 	//if (!this.instance) - need to destroy?? gurumed
 		this.instance = new uniEditor(this.domNode, (code) => {
@@ -290,8 +295,7 @@ uniEditorWidget.prototype.execute = function() {
 /*
 Selectively refreshes the widget if needed. Returns true if the widget or any of its children needed re-rendering
 */
-const modetid="$:/config/TextEditor/EditorHeight/Mode"
-const Heighttid="$:/config/TextEditor/EditorHeight/Height"
+
 uniEditorWidget.prototype.refresh = function(changedTiddlers) {
 	var changedAttributes = this.computeAttributes();
 	// Completely rerender if any of our attributes have changed
@@ -299,7 +303,7 @@ uniEditorWidget.prototype.refresh = function(changedTiddlers) {
 		this.refreshSelf();
 		return true;
 	}
-	if(changedTiddlers[this.editTitle]) {
+	if(!this.passThru && changedTiddlers[this.editTitle]) {
 		//BJ FIXED saving causes the widget to get redrawn
         //Gurumed - Only a 'saving' variable is needed and every time we 
         //save we set to true, and then test here, if true set to false and
@@ -312,32 +316,10 @@ uniEditorWidget.prototype.refresh = function(changedTiddlers) {
             return true
         }
 	}
-	if(changedTiddlers[modetid]) {//changes from toolbar buttons
-		var fields ={}
-		var mode = $tw.wiki.getTiddlerText(modetid)
-		if (mode ==="fixed") this.editopts.height = $tw.wiki.getTiddlerText(Heighttid)
-		else this.editopts.height =""
-		fields.text = JSON.stringify(this.editopts,null,$tw.config.preferences.jsonSpaces);
-		fields.title ="$:/plugins/bj/unieditor/edoptions.json"
-		fields.type = "application/json"
-		this.wiki.addTiddler(new $tw.Tiddler(fields))	
-	};
-	if(changedTiddlers[Heighttid]) {
-		var fields ={}
-		this.editopts.height = $tw.wiki.getTiddlerText(Heighttid)
-		fields.text = JSON.stringify(this.editopts,null,$tw.config.preferences.jsonSpaces);
-		fields.title ="$:/plugins/bj/unieditor/edoptions.json"
-		fields.type = "application/json"
-		this.wiki.addTiddler(new $tw.Tiddler(fields))
-	};		
-	if(changedTiddlers["$:/plugins/bj/unieditor/edoptions.json"]) {
-		let self = this
-		consolelog("refesh")
-		this.domNode.innerHTML=""
-		this.instance = new uniEditor(this.domNode, (code) => {
-		self.saveChanges(code);
-		}, this.editopts);
-		this.instance.setCode(this.editInfo.value)
+	
+	if(changedTiddlers["$:/plugins/bj/unieditor/edoptions.json"]||changedTiddlers[Heighttid]||changedTiddlers[modetid]) {
+		this.refreshSelf()
+            return true
 	}
 	return this.refreshChildren(changedTiddlers);
 

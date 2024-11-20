@@ -52,6 +52,31 @@
 		}
 	},
 	{
+		"file": "redo.tid",
+		"fields":     {
+			"caption": "Redo",
+			"condition": "[<targetTiddler>!has[type]] [<targetTiddler>get[type]!prefix[image/]] [<targetTiddler>get[type]match[image/svg+xml]]",
+			"description": "redo",
+			"icon": "$:/core/images/right-arrow",
+			"tags": "$:/tags/EditorToolbar",
+			"title": "$:/plugins/bj/unieditorui/EditorToolbar/redo",
+			"type": "text/vnd.tiddlywiki"
+		}
+	},
+	{
+		"file": "undo.tid",
+		"fields":     {
+			"text": "<$action-sendmessage\t$message=\"tm-edit-text-operation\"\t$param=\"historyUndo\"/>",
+			"title": "$:/plugins/bj/unieditor/ui/EditorToolbar/undo",
+			"tags": "$:/tags/EditorToolbar",
+			"type": "text/vnd.tiddlywiki",
+			"caption": "Undo",
+			"condition": "[<targetTiddler>!has[type]] [<targetTiddler>get[type]!prefix[image/]] [<targetTiddler>get[type]match[image/svg+xml]]",
+			"description": "undo ",
+			"icon": "$:/core/images/left-arrow"
+		}
+	},
+	{
 		"file": "editortoolbar_search.tid",
 		"fields": {
 			"title": "$:/bj/ui/EditorToolbar/search",
