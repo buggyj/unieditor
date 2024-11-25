@@ -85,12 +85,13 @@ destroy(){
     this.doIndents =  (opts.indents)? this.handleIndents:(e)=>{return false};   
 
     this.txtarea.addEventListener('keydown', this.whenKey = (e) => {
-      if  (this.doTabs(e)||this.doBrackets(e)||this.doIndents(e)||this.handleHistory(e)||this.callkey(e))
+      if  (this.doTabs(e)||this.doBrackets(e)||this.doIndents(e)||this.handleHistory(e)||this.callkey(e)){
              if (!this.dirty) {
              this.updateTop() 
              this.dirty = true
 		 } 
 		  this.updateEditor()//bj mod
+	  }
     })
     this.txtarea.addEventListener('input', this.whenInput = (e) => {
 		if (!this.dirty) {
@@ -118,7 +119,6 @@ destroy(){
 		  e.preventDefault();
 		  if(this.dirty) return;//top of history
 			value = this.pullRedo()
-			consolelog("uhistredo2 "+value)
 			if (value === null ) {
 				this.txtarea.value=this.dirtyBuffer
 				this.setCursor(this.dirtyCursor)
@@ -138,7 +138,7 @@ destroy(){
 				this.dirty = false
 			}
 			value = this.pullUndo()
-			e.preventDefault();consolelog("uhistoryundo2 "+value)
+			e.preventDefault();
 			if (value === null) return
 			this.txtarea.value=value.txt
 			this.setCursor(value.pos)
@@ -166,7 +166,7 @@ destroy(){
 				this.dirty = false
 			}
 			value = this.pullUndo()
-			e.preventDefault();consolelog("uhistoryundo "+value)
+			e.preventDefault();
 			if (value === null) return
 			this.txtarea.value=value.txt
 			this.setCursor(value.pos)
@@ -177,7 +177,6 @@ destroy(){
 			e.preventDefault();
 			if(this.dirty) return;
 			value = this.pullRedo()
-			consolelog("uhistredo "+value)
 			if (value === null ) {
 				this.txtarea.value=this.dirtyBuffer
 				this.setCursor(this.dirtyCursor)
@@ -266,7 +265,7 @@ destroy(){
 
 
   // Push a new string onto the stack, update current, top, and check for maxSize overflow
-  push(value,pos =-1) { consolelog("push " + value + "-" +this.current, this.top, this.dirty,this.stack,this.cursor)
+  push(value,pos =-1) { //consolelog("push " + value + "-" +this.current, this.top, this.dirty,this.stack,this.cursor)
     // If we are in the middle of the stack, remove all items above the current index
     if (this.current < this.top) {
       this.stack = this.stack.slice(0, this.current + 1);
@@ -379,9 +378,11 @@ destroy(){
 	return true
 
   }
+   
 //--------------------Indents
   handleIndents (e) {
     if (e.key !== "Enter") return false
+    if (e.ctrlKey || e.altKey || e.shiftKey) return false
     //gurumed - history for undo/redo could be implemented on newline here
 	const txtarea = this.txtarea
 	event.preventDefault(); 
@@ -407,6 +408,7 @@ destroy(){
   }
   //--------------------history
   handleHistory (e) {  
+	 if (e.ctrlKey || e.altKey || e.shiftKey) return false
 	  if (e.key === ' ' ||e.key === '\n') 	this.push(this.txtarea.value,this.txtarea.selectionEnd)
   
     return false;
