@@ -328,10 +328,15 @@ destroy(){
 		const end = txtarea.selectionEnd;
 		
 		if (start === end) {
-			txtarea.setRangeText(tab, start, end, "end");
-			return true
-		} 
-		
+			if (!event.shiftKey) {
+				txtarea.setRangeText(tab, start, end, "end");
+				return true
+			}  else if (start > tab.length) {
+				txtarea.setRangeText("", start-(tab.length), end);
+				txtarea.setSelectionRange(start-(tab.length), start-(tab.length))
+				return true
+			}
+		}
 		start = lineStartPx(txtarea, start);
 		const selectedText = txtarea.value.slice(start, end);
 		const lines = selectedText.split("\n");
@@ -395,8 +400,24 @@ destroy(){
 	//number of leading spaces from the start of the line to the first non-space character
 	const leadingSpaces = currentLine.match(/^\s*/)[0].length;	
 	
+	let firstchar = currentLine[leadingSpaces]
 	// Insert newline and spaces
-	const spaces = '\n' + ' '.repeat(leadingSpaces);
+	let spaces = '\n' + ' '.repeat(leadingSpaces);
+	if (this.opts.language === "tw" &&  this.opts.bullets.indexOf(firstchar) !== -1) {
+		 spaces += firstchar;
+		 firstchar = currentLine[leadingSpaces+1]
+		 if (this.opts.bullets.indexOf(firstchar) !== -1) {
+			 spaces += firstchar;
+			 firstchar = currentLine[leadingSpaces+2]
+			 if (this.opts.bullets.indexOf(firstchar) !== -1) {
+				 spaces += firstchar;
+				 firstchar = currentLine[leadingSpaces+3]
+				 if (this.opts.bullets.indexOf(firstchar) !== -1) {
+					 spaces += firstchar;
+				 }
+			 }
+		 }
+	 }
 	const newText = txtarea.value.slice(0, caretPosition) + spaces + txtarea.value.slice(caretPosition);
 
 	// Update textarea content and move the caret

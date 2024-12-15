@@ -2,10 +2,8 @@
     "tabs": "    ",
     "brackets": true,
     "indents": true,
-    "spellCheck": [
-        "tw"
-    ],
+    "spellCheck": ["tw"],
     "height": "80vh",
     "historySize":"32",
-    "language": "tw"
+    "bullets":["*","#"]
 }
